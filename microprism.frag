@@ -72,16 +72,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // texture lookup with chroma spread
     vec2 uvTranslate = .5 * cellSize * mix(-offset/4.,offset*1.2,hitScore);
     float chromAbr = pow(aberration,sqrt(1.2*cellsHigh));
-    
-    float dist = distFromTriCentre(uv-.5, cellSize,hitScore);
-    
-    vec4 txColor = vec4(1.);
-    txColor.x = texture2D(iChannel0, uv+(uvTranslate/chromAbr)).x;
-    txColor.y = texture2D(iChannel0, uv+uvTranslate).y;
-    txColor.z = texture2D(iChannel0, uv+(chromAbr*uvTranslate)).z;
+    vec4 txColor = vec4(
+    	texture2D(iChannel0, uv+(uvTranslate/chromAbr)).x,
+    	texture2D(iChannel0, uv+uvTranslate).y,
+    	texture2D(iChannel0, uv+(chromAbr*uvTranslate)).z);
   
     // vary brightness based on offset, distance from top of cell
     float bright = (.04 + (.04 * length(offset)/.5)) * (1.-(.7*fract((uv.y-.5)/cellSize.y)));
     fragColor = mix(txColor, mix(pow(txColor,vec4(2.)), vec4(1.)-pow(vec4(1.)-txColor,vec4(2.)),hitScore), vec4(bright));
-	fragColor -= pow(.94,pow(cellsHigh,1.3)) * .8 * (1. - (pow(.92,3.*pow(dist,2.5))));
+    
+    // vignetting based on distance from centre of cell, scale back by cell count
+    float vignette = distFromTriCentre(uv-.5, cellSize, hitScore);
+    fragColor -= .8 * pow(.94,pow(cellsHigh,1.3)) * (1. - (pow(.92,3.*pow(vignette,2.5))));
 }
