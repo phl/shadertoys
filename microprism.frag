@@ -8,19 +8,19 @@ float triAspect = 0.866; //sqrt(3.)/ 2.;
 
 float hitTest(vec2 uv, vec2 cellSize) {
 
-    vec2 cellOffset = mod(uv,cellSize) / cellSize;
+    vec2 cellOffset = mod(uv,cellSize);
     vec2 cellIdx = floor(uv/cellSize);
-    vec2 subCellIdx = vec2(cellIdx.x*2. + step(.5,cellOffset.x), cellIdx.y);
+    vec2 subCellIdx = vec2(cellIdx.x*2.0 + step(.5,cellOffset.x/cellSize.x), cellIdx.y);
 
-    float oddRow = sign(mod(subCellIdx.y,2.));
-    float oddSubCol = sign(mod(subCellIdx.x,2.));
+    float oddRow = sign(mod(subCellIdx.y,2.0));
+    float oddSubCol = sign(mod(subCellIdx.x,2.0));
     
-	float testTopLeft = 1.0-mod(oddRow + oddSubCol,2.);
+	float testTopLeft = 1.0-mod(oddRow + oddSubCol,2.0);
     
-    // 0.0 or 1.0
+    // -ve or +ve
     return mix(
-        step((1.-cellOffset.y),mod(cellOffset.x,0.5)*2.),
-        step(mod(cellOffset.x,.5)*2.,cellOffset.y),        
+        (mod(cellOffset.x,cellSize.x/2.0)*2.0)-((cellSize.y-cellOffset.y)/(screenAspect*triAspect)),
+        (cellOffset.y/(screenAspect*triAspect))-(mod(cellOffset.x,cellSize.x/2.0)*2.0),        
         testTopLeft
         );
 }
@@ -67,7 +67,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uv = fixUV(fragCoord.xy / iResolution.xy);
     
     // find whether co-ord in 'odd' or 'even' cell
-    float hitScore = hitTest(uv-.5, cellSize);      
+    float hitScore = step(0.,hitTest(uv-.5, cellSize));      
     
     // texture lookup with chroma spread
     vec2 uvTranslate = .5 * cellSize * mix(-offset/4.,offset*1.2,hitScore);
@@ -75,7 +75,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec4 txColor = vec4(
     	texture2D(iChannel0, uv+(uvTranslate/chromAbr)).x,
     	texture2D(iChannel0, uv+uvTranslate).y,
-    	texture2D(iChannel0, uv+(chromAbr*uvTranslate)).z);
+    	texture2D(iChannel0, uv+(chromAbr*uvTranslate)).z, 1.);
   
     // vary brightness based on offset, distance from top of cell
     float bright = (.04 + (.04 * length(offset)/.5)) * (1.-(.7*fract((uv.y-.5)/cellSize.y)));
