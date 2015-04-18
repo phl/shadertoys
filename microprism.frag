@@ -8,19 +8,19 @@ float triAspect = 0.866; //sqrt(3.)/ 2.;
 
 float hitTest(vec2 uv, vec2 cellSize) {
 
-    vec2 cellOffset = mod(uv,cellSize);
+    vec2 cellOffset = mod(uv,cellSize) / cellSize;
     vec2 cellIdx = floor(uv/cellSize);
-    vec2 subCellIdx = vec2(cellIdx.x*2.0 + step(.5,cellOffset.x/cellSize.x), cellIdx.y);
+    vec2 subCellIdx = vec2(cellIdx.x*2. + step(.5,cellOffset.x), cellIdx.y);
 
-    float oddRow = sign(mod(subCellIdx.y,2.0));
-    float oddSubCol = sign(mod(subCellIdx.x,2.0));
+    float oddRow = sign(mod(subCellIdx.y,2.));
+    float oddSubCol = sign(mod(subCellIdx.x,2.));
     
-	float testTopLeft = 1.0-mod(oddRow + oddSubCol,2.0);
+	float testTopLeft = 1.0-mod(oddRow + oddSubCol,2.);
     
     // 0.0 or 1.0
     return mix(
-        step((cellSize.y-cellOffset.y)/(screenAspect*triAspect),mod(cellOffset.x,cellSize.x/2.0)*2.0),
-        step(mod(cellOffset.x,cellSize.x/2.0)*2.0,cellOffset.y/(screenAspect*triAspect)),        
+        step((1.-cellOffset.y),mod(cellOffset.x,0.5)*2.),
+        step(mod(cellOffset.x,.5)*2.,cellOffset.y),        
         testTopLeft
         );
 }
@@ -31,13 +31,13 @@ float distFromTriCentre(vec2 uv, vec2 cellSize, float hitScore) {
     float oddRow = sign(mod(cellIdx.y,2.0));
     float oddTri = 1.0-mod(oddRow + hitScore,2.0);
 
-    vec2 cellOffset = mod(vec2(uv.x+mix(cellSize.x*.5,.0,oddTri),uv.y),cellSize);
-    vec2 triOffset = vec2(cellOffset.x-(cellSize.x*.5), 
-               mix(cellOffset.y-(.5*cellSize.x),
-                   cellOffset.y-(cellSize.y-(.5*cellSize.x)),
-                   hitScore)/screenAspect);
+    vec2 cellOffset = mod(vec2(uv.x+mix(cellSize.x*.5,.0,oddTri),uv.y),cellSize)/cellSize;
+    vec2 triOffset = vec2((cellOffset.x-.5)/triAspect, 
+               mix(cellOffset.y-(1./3.),
+                   cellOffset.y-(1.-(1./3.)),
+                   hitScore));
 
-    return triAspect*length(triOffset)/(.5*cellSize.x);
+    return length(triOffset)*(3./2.);
 }
 
 vec2 fixUV(vec2 uv) {
