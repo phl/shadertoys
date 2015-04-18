@@ -8,22 +8,23 @@ float triAspect = 0.866; //sqrt(3.)/ 2.;
 
 float hitTest(vec2 uv, vec2 cellSize) {
 
-    vec2 cellOffset = mod(uv,cellSize);
+    vec2 cellOffset = mod(uv,cellSize) / cellSize;
     vec2 cellIdx = floor(uv/cellSize);
-    vec2 subCellIdx = vec2(cellIdx.x*2.0 + step(.5,cellOffset.x/cellSize.x), cellIdx.y);
+    vec2 subCellIdx = vec2(cellIdx.x*2. + step(.5,cellOffset.x), cellIdx.y);
 
-    float oddRow = sign(mod(subCellIdx.y,2.0));
-    float oddSubCol = sign(mod(subCellIdx.x,2.0));
+    float oddRow = sign(mod(subCellIdx.y,2.));
+    float oddSubCol = sign(mod(subCellIdx.x,2.));
     
-	float testTopLeft = 1.0-mod(oddRow + oddSubCol,2.0);
+	float testTopLeft = 1.-mod(oddRow + oddSubCol,2.);
     
-    // -ve or +ve
-    return mix(
-        (mod(cellOffset.x,cellSize.x/2.0)*2.0)-((cellSize.y-cellOffset.y)/(screenAspect*triAspect)),
-        (cellOffset.y/(screenAspect*triAspect))-(mod(cellOffset.x,cellSize.x/2.0)*2.0),        
-        testTopLeft
-        );
+    float tlScore = (mod(cellOffset.x,.5)*2.)-(1.-cellOffset.y);
+    float trScore = cellOffset.y-(mod(cellOffset.x,.5)*2.);
+
+    float retSign = sign(mix(tlScore,trScore,testTopLeft));
+    
+    return retSign;
 }
+    
 
 float distFromTriCentre(vec2 uv, vec2 cellSize, float hitScore) {
 
