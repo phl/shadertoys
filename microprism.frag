@@ -28,16 +28,18 @@ float hitTest(vec2 uv, vec2 cellSize) {
 float distFromTriCentre(vec2 uv, vec2 cellSize, float hitScore) {
 
     vec2 cellIdx = floor(uv/cellSize);
-    float oddRow = sign(mod(cellIdx.y,2.0));
-    float oddTri = 1.0-mod(oddRow + hitScore,2.0);
+    float oddRow = sign(mod(cellIdx.y,2.));
+    float oddTri = 1.0-mod(oddRow + hitScore,2.);
 
-    vec2 cellOffset = mod(vec2(uv.x+mix(cellSize.x*.5,.0,oddTri),uv.y),cellSize)/cellSize;
+    vec2 cellOffset = mod(uv,cellSize)/cellSize;
+    cellOffset.x = fract(cellOffset.x +.5 * sign(1.-oddTri));
+        
     vec2 triOffset = vec2((cellOffset.x-.5)/triAspect, 
                mix(cellOffset.y-(1./3.),
                    cellOffset.y-(1.-(1./3.)),
                    hitScore));
 
-    return length(triOffset)*(3./2.);
+    return length(triOffset)*3./2.;
 }
 
 vec2 fixUV(vec2 uv) {
@@ -62,7 +64,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float cellsWide = cellsHigh * screenAspect * triAspect;
     vec2 cellSize = vec2(1.0/cellsWide,1.0/cellsHigh);
     
-	vec2 uv = fixUV(fragCoord.xy / iResolution.xy);
+    vec2 uv = fixUV(fragCoord.xy / iResolution.xy);
     
     // find whether co-ord in 'odd' or 'even' cell
     float hitScore = hitTest(uv-.5, cellSize);      
